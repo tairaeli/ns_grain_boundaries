@@ -1,0 +1,52 @@
+# 2 grains in a NS
+
+units           lj
+atom_style      charge
+
+# Variable Parameters (Change these for each run)
+variable        g           equal 400                            # Gamma, coupling, unitless
+variable        k           equal 3                             # Kappa (a/lambda), screening
+variable        s           equal 55555                             # Random Seed
+
+# defining steps
+variable        equil       equal 1e5
+variable        nsteps       equal 1e7
+
+# neighbor mods
+neighbor        0.1 bin
+neigh_modify    one 2000 page 20000
+
+# reading in data
+read_data	grainBoundBcc.dat
+
+# set potential
+pair_style      lj/cut 2.5
+pair_coeff      1 1 1 1.1 2.8
+
+# setting velocity parameters
+velocity        all create ${g} ${s} loop geom
+
+# Fix NVE
+fix             1 all nve
+
+# Equilibration
+thermo          1000                                                # Display every n steps
+run             ${equil}                                           # Run Equilibration
+reset_timestep  0         
+
+# Compute Diffusion Coefficient with MSD
+compute         msd all msd com yes
+variable        msd_fm equal c_msd[4]*1e10
+variable        d_star equal c_msd[4]/6/(step*dt+1e-6)
+
+# Define output format
+thermo_style	custom step time temp pe ke etotal v_msd_fm v_d_star
+thermo_modify   norm yes
+
+# Configure dump output
+dump            2 all custom 10000 md.*.dump type id q mass x y z vx vy vz ix iy iz
+dump_modify     2 sort id
+
+# Run
+thermo          1000                                                # Display values every n steps
+run             ${nsteps}
