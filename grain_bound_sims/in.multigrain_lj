@@ -4,30 +4,37 @@ units           lj
 atom_style      charge
 
 # Variable Parameters (Change these for each run)
-variable        g           equal 400                            # Gamma, coupling, unitless
-variable        k           equal 3                             # Kappa (a/lambda), screening
-variable        s           equal 55555                             # Random Seed
+variable g equal 400                            # Gamma, coupling, unitless
+variable k equal 0.537                              # Kappa (a/lambda), screening
+variable s           equal 55555                             # Random Seed
+
+# defining variables
+variable a equal 14.4399764 # ion dist (fm)
+variable lam equal ${a}/${k}
+variable z equal 8
+variable equal 1.4399764 # e^2 (MeV*fm)
+variable kT equal (${e}*${z}^2)/(${a}*${g}) # Temperature (MeV)
 
 # defining steps
 variable        equil       equal 1e5
-variable        nsteps       equal 1e7
+variable        nsteps       equal 60
 
 # neighbor mods
 neighbor        0.1 bin
-neigh_modify    one 2000 page 20000
+neigh_modify    one 12000 page 120000
 
 # reading in data
 read_data	grainBoundBcc.dat
 
 # set potential
-pair_style      lj/cut 2.5
-pair_coeff      1 1 1 1.1 2.8
+pair_style      coul/debye ${k} 2.5
+pair_coeff      * *
 
 # setting velocity parameters
 velocity        all create ${g} ${s} loop geom
 
-# Fix NVE
-fix             1 all nve
+# Fix NVT
+fix             1 all nvt temp ${g} ${g} $(dt*100) 
 
 # Equilibration
 thermo          1000                                                # Display every n steps
@@ -44,7 +51,7 @@ thermo_style	custom step time temp pe ke etotal v_msd_fm v_d_star
 thermo_modify   norm yes
 
 # Configure dump output
-dump            2 all custom 10000 md.*.dump type id q mass x y z vx vy vz ix iy iz
+dump            2 all custom 100000 md.*.dump type id q mass x y z vx vy vz ix iy iz
 dump_modify     2 sort id
 
 # Run
