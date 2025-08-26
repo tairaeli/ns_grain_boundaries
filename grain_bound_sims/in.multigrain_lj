@@ -6,18 +6,18 @@ atom_style      charge
 # Variable Parameters (Change these for each run)
 variable g equal 400                            # Gamma, coupling, unitless
 variable k equal 0.537                              # Kappa (a/lambda), screening
-variable s           equal 55555                             # Random Seed
+variable s equal 55555                             # Random Seed
 
 # defining variables
 variable a equal 14.4399764 # ion dist (fm)
-variable lam equal ${a}/${k}
-variable z equal 8
-variable equal 1.4399764 # e^2 (MeV*fm)
+variable lam equal ${a}/${k} # lambda
+variable z equal 8 # atomic number
+variable e equal 1.4399764 # e^2 (MeV*fm)
 variable kT equal (${e}*${z}^2)/(${a}*${g}) # Temperature (MeV)
 
 # defining steps
-variable        equil       equal 1e5
-variable        nsteps       equal 60
+variable equil equal 1e5
+variable nsteps equal 60
 
 # neighbor mods
 neighbor        0.1 bin
