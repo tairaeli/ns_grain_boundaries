@@ -50,7 +50,7 @@ variable        dt          equal ${timestep}/3e8                   # Timestep (
 
 # Set Runtimes
 variable        equil       equal 1e5                               # Equilibration Steps (1e5 normally)
-variable        nsteps      equal 1e4                               # Runtime Steps (1e7 normally)
+variable        nsteps      equal 5e6                               # Runtime Steps (1e7 normally)
 
 ### ------------------------------------------------------------------------------------------- ###
 
