@@ -10,14 +10,14 @@ variable s equal 55555                             # Random Seed
 
 # defining variables
 variable a equal 14.4399764 # ion dist (fm)
-variable lam equal ${a}/${k} # lambda
+variable inv_lam equal ${k}/${a} # lambda
 variable z equal 8 # atomic number
 variable e equal 1.4399764 # e^2 (MeV*fm)
 variable kT equal (${e}*${z}^2)/(${a}*${g}) # Temperature (MeV)
 
 # defining steps
 variable equil equal 1e5
-variable nsteps equal 60
+variable nsteps equal 3e5
 
 # neighbor mods
 neighbor        0.1 bin
@@ -27,14 +27,14 @@ neigh_modify    one 12000 page 120000
 read_data	grainBoundBcc.dat
 
 # set potential
-pair_style      coul/debye ${k} 2.5
+pair_style      coul/debye ${inv_lam} 2.5
 pair_coeff      * *
 
 # setting velocity parameters
-velocity        all create ${g} ${s} loop geom
+velocity        all create ${kT} ${s} loop geom
 
 # Fix NVT
-fix             1 all nvt temp ${g} ${g} $(dt*100) 
+fix             1 all nvt temp ${kT} ${kT} $(dt*100) 
 
 # Equilibration
 thermo          1000                                                # Display every n steps
