@@ -1,0 +1,86 @@
+# 2 grains in a NS
+
+# Variable Parameters (Change these for each run)
+variable g equal 500                           # Gamma, coupling, unitless
+variable k equal 0.333                              # Kappa (a/lambda), screening
+variable s equal 2334                             # Random Seed
+
+# Simulation Parameters
+units           lj
+atom_style      charge
+dimension	    3
+
+# Constants
+variable k_e equal 1.4399764      # k_e * e^2 (MeV*fm)
+
+# box params
+variable L          equal 606.268744808                     # Box Length (fm) 
+variable M          equal 20                                # BCC size                
+variable alat       equal ${L}/${M}                         # lattice dist (fm)
+variable rc         equal 8.00                              # cutoff dist (lattice spaces)
+variable cut        equal ${alat}*${rc}   
+
+# Ion Parameters
+variable N      equal 16000                   # Num atoms 
+variable n      equal ${N}/${L}^3             # number density (fm^-3)
+variable a      equal (3/(4*PI*${n}))^(1/3)   # ion dist (fm)
+variable z      equal 8                       # atomic number
+variable m      equal 16                      # Mass
+
+# more sim params
+atom_modify  sort 1 ${a}                           # Changing frequency and binsize
+variable     inv_lam equal ${k}/${a}
+variable     T equal (${k_e}*${z}^2)/(${a}*${g})   # Temperature (MeV)
+
+# building a box
+lattice         bcc ${alat}                                         # Lattice type
+region          simbox block 0 ${M} 0 ${M} 0 ${M}                   # Create region for simulation
+create_box      1 simbox                                            # Create space for atoms inside simulation
+create_atoms    1 box                                               # Create atoms inside space (Lattice)
+
+# Time Parameters
+variable dt equal 0.475887 # Timestep (fs)
+
+# defining steps
+variable equil equal 1e4
+variable nsteps equal 1e6
+
+# neighbor mods
+neigh_modify    one 20000 page 200000
+
+# timesteps
+timestep ${dt}
+
+# atom properties
+set type 1 charge ${z}          # set charge
+mass * ${m}                     # Set Mass
+velocity all create ${T} ${s}   # set init velocity
+
+# set potential
+pair_style      coul/debye ${inv_lam} ${cut}
+pair_coeff      * *
+
+# Fix NVT
+fix             1 all nvt temp ${T} ${T} $(dt*100) 
+
+# Equilibration
+thermo          1000        # Display every n steps
+run             ${equil}    # Run Equilibration
+reset_timestep  0         
+
+# Compute Diffusion Coefficient with MSD
+compute         msd all msd com yes
+variable        msd_fm equal c_msd[4]*1e10
+variable        d_star equal c_msd[4]/6/(step*dt+1e-6)
+
+# Define output format
+thermo_style	custom step time temp pe ke etotal v_msd_fm v_d_star
+thermo_modify   norm yes
+
+# Configure dump output
+dump            2 all custom 100000 md.*.dump type id q mass x y z vx vy vz ix iy iz
+dump_modify     2 sort id
+
+# Run
+thermo          1000        # Display values every n steps
+run             ${nsteps}
